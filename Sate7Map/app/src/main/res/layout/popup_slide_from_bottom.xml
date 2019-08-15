@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:background="@drawable/bg_round"
+    android:orientation="vertical"
+    >
+    <TextView
+        android:id="@+id/popTitle"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="center"
+        android:text="Title"/>
+    <View
+        style="@style/line_style"/>
+
+    <TextView
+        android:id="@+id/popSure"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="center"
+        android:background="@drawable/btn_textview"
+        android:text="@string/sure"/>
+
+    <View
+        style="@style/line_style"/>
+
+    <TextView
+        android:id="@+id/popCancel"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="center"
+        android:background="@drawable/btn_textview"
+        android:text="@string/cancel"/>
+
+</LinearLayout>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/item_height"
+    android:background="@color/white">
+
+
+    <LinearLayout
+        android:id="@+id/mode"
+        android:layout_width="150dp"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/item_name"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="2"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textSize="18dp"
+            android:text="MyFence" />
+
+        <TextView
+            android:id="@+id/item_valid_time"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:gravity="center"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_toRightOf="@id/mode"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/item_date"
+            android:layout_height="0dp"
+            android:layout_width="match_parent"
+            android:layout_gravity="left"
+            android:layout_weight="1"
+            android:text="15:45" />
+
+        <TextView
+            android:id="@+id/item_mode"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:text="@string/in" />
+
+        <TextView
+            android:id="@+id/item_other_info"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:text="circle" />
+    </LinearLayout>
+
+
+</RelativeLayout>

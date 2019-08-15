@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="default_start_monitor_hour">10</integer>
+    <integer name="default_start_monitor_minute">0</integer>
+    <integer name="default_end_monitor_hour">22</integer>
+    <integer name="default_end_monitor_minute">0</integer>
+    <integer name="track_freq_max">100</integer>
+    <integer name="track_freq_default">3</integer>
+    <!-- 多久时间内 地图不会自动定位到中心位置 -->
+    <integer name="create_fence_time_limit">20000</integer>
+    <integer name="locate_fence_time_limit">10000</integer>
+    <integer name="edit_fence_time_limit">10000</integer>
+    <integer name="move_time_limit">10000</integer>
+</resources>

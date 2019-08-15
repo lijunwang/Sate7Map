@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TableRow>
+
+        <EditText
+            android:id="@+id/polygon1Long"
+            style="@style/FenceET"
+            android:text="113.8646609844038"
+            android:hint="@string/hint_polygon_long1" />
+
+        <EditText
+            android:id="@+id/polygon1Lat"
+            style="@style/FenceET"
+            android:text="22.588376828707446"
+            android:hint="@string/hint_polygon_lat1" />
+    </TableRow>
+
+    <TableRow>
+
+        <EditText
+            android:id="@+id/polygon2Long"
+            android:text="113.86560420518897"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_long2" />
+
+        <EditText
+            android:id="@+id/polygon2Lat"
+            style="@style/FenceET"
+            android:text="22.58846859211464"
+            android:hint="@string/hint_polygon_lat2" />
+    </TableRow>
+
+    <TableRow>
+
+        <EditText
+            android:id="@+id/polygon3Long"
+            style="@style/FenceET"
+            android:text="113.86526284909529"
+            android:hint="@string/hint_polygon_long3" />
+
+        <EditText
+            android:id="@+id/polygon3Lat"
+            style="@style/FenceET"
+            android:text="22.58792635290236"
+            android:hint="@string/hint_polygon_lat3" />
+    </TableRow>
+
+    <TableRow>
+
+        <EditText
+            android:id="@+id/polygon4Long"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_long4" />
+
+        <EditText
+            android:id="@+id/polygon4Lat"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_lat4" />
+    </TableRow>
+
+    <TableRow>
+
+        <EditText
+            android:id="@+id/polygon5Long"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_long5" />
+
+        <EditText
+            android:id="@+id/polygon5Lat"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_lat5" />
+    </TableRow>
+
+    <TableRow>
+
+        <EditText
+            android:id="@+id/polygon6Long"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_long6" />
+
+        <EditText
+            android:id="@+id/polygon6Lat"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_lat6" />
+    </TableRow>
+
+    <TableRow>
+
+        <EditText
+            android:id="@+id/polygon7Long"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_long7" />
+
+        <EditText
+            android:id="@+id/polygon7Lat"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_lat7" />
+    </TableRow>
+
+    <TableRow>
+
+        <EditText
+            android:id="@+id/polygon8Long"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_long8" />
+
+        <EditText
+            android:id="@+id/polygon8Lat"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_lat8" />
+    </TableRow>
+
+    <TableRow>
+
+        <EditText
+            android:id="@+id/polygon9Long"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_long9" />
+
+        <EditText
+            android:id="@+id/polygon9Lat"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_lat9" />
+    </TableRow>
+
+    <TableRow>
+
+        <EditText
+            android:id="@+id/polygon10Long"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_long10" />
+
+        <EditText
+            android:id="@+id/polygon10Lat"
+            style="@style/FenceET"
+            android:hint="@string/hint_polygon_lat10" />
+    </TableRow>
+
+</TableLayout>

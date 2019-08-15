@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/track_settings">
+        <EditTextPreference
+            android:defaultValue="@integer/track_freq_default"
+            android:hint="@string/track_settings_summery_default"
+            android:inputType="phone"
+            android:key="frequency"
+            android:persistent="true"
+            android:summary="@string/track_settings_summery_default"
+            android:title="@string/track_settings_title" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/create_fence">
+        <SwitchPreference
+            android:key="last_sure"
+            android:checked="false"
+            android:persistent="true"
+            android:summaryOn="@string/create_fence_on"
+            android:summaryOff="@string/create_fence_off"
+            android:title="@string/create_fence_title" />
+    </PreferenceCategory>
+</PreferenceScreen>

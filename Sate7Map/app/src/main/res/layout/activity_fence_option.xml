@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".FenceOptionActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme.AppBarOverlay"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:popupTheme="@style/AppTheme.PopupOverlay" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <EditText
+        android:id="@+id/editTextFenceName"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:gravity="center_vertical|left"
+        android:hint="@string/fence_name_hint"
+        android:paddingLeft="10dp"
+        app:layout_constraintTop_toBottomOf="@id/container" />
+
+    <RadioGroup
+        android:id="@+id/radioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:checkedButton="@id/fence_mode_in_out"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@+id/editTextFenceName">
+
+        <TextView
+            android:id="@+id/monitoring"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:text="@string/fence_mode" />
+
+        <RadioButton
+            android:id="@+id/fence_mode_in"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/fence_mode_in" />
+
+        <RadioButton
+            android:id="@+id/fence_mode_out"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/fence_mode_out" />
+
+        <RadioButton
+            android:id="@+id/fence_mode_in_out"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/fence_mode_in_out" />
+    </RadioGroup>
+    <TextView
+        android:id="@+id/monitorStart"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:text="@string/fence_mode_time_start"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/radioGroup" />
+
+    <TextView
+        android:id="@+id/monitorEnd"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:gravity="center_vertical"
+        android:text="@string/fence_mode_time_end"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/radioGroup" />
+
+    <NumberPicker
+        android:id="@+id/pickerStartHour"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/monitorStart" />
+
+    <NumberPicker
+        android:id="@+id/pickerStartMinute"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toEndOf="@+id/pickerStartHour"
+        app:layout_constraintTop_toBottomOf="@+id/monitorStart" />
+
+    <NumberPicker
+        android:id="@+id/pickerEndHour"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toStartOf="@+id/pickerEndMinute"
+        app:layout_constraintTop_toBottomOf="@+id/monitorEnd" />
+
+    <NumberPicker
+        android:id="@+id/pickerEndMinute"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/monitorEnd" />
+
+
+    <RadioGroup
+        android:id="@+id/radioGroup2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:checkedButton="@id/fence_circle"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@+id/pickerStartMinute">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:text="@string/fence_shape" />
+
+        <RadioButton
+            android:id="@+id/fence_circle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/fence_circle" />
+
+        <RadioButton
+            android:id="@+id/fence_polygon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/fence_polygon" />
+
+        <RadioButton
+            android:id="@+id/fence_self"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/fence_self" />
+    </RadioGroup>
+
+    <EditText
+        android:id="@+id/fence_circle_radius"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:hint="@string/fence_circle_radius"
+        android:inputType="number"
+        android:paddingLeft="10dp"
+        app:layout_constraintTop_toBottomOf="@+id/radioGroup2" />
+
+    <com.zhouyou.view.seekbar.SignSeekBar
+        android:id="@+id/fence_polygon_points_seek"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginRight="20dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/fence_circle_radius"
+        app:ssb_auto_adjust_section_mark="true"
+        app:ssb_max="10"
+        app:ssb_min="3"
+        app:ssb_section_count="7"
+        app:ssb_section_text_position="bottom_sides"
+        app:ssb_show_progress_in_float="false"
+        app:ssb_show_section_mark="true"
+        app:ssb_show_section_text="false"
+        app:ssb_show_sign="true"
+        app:ssb_show_thumb_text="false"
+        app:ssb_sign_arrow_height="5dp"
+        app:ssb_sign_arrow_width="10dp"
+        app:ssb_sign_border_color="@color/colorAccent"
+        app:ssb_sign_color="@color/colorPrimaryDark"
+        app:ssb_sign_show_border="true" />
+
+    <Button
+        android:id="@+id/fence_sure"
+        android:layout_width="100dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="25dp"
+        android:layout_marginBottom="25dp"
+        android:background="@drawable/btn_round_button_sure"
+        android:text="@string/sure"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/fence_cancel"
+        android:layout_width="100dp"
+        android:layout_height="45dp"
+        android:layout_marginEnd="25dp"
+        android:layout_marginBottom="25dp"
+        android:background="@drawable/btn_round_button"
+        android:text="@string/cancel"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

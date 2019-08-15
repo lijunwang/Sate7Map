@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#008577</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#D81B60</color>
+    <color name="red_normal">#FF0000</color>
+    <color name="red_pressed">#FF6666</color>
+    <color name="green_normal">#00FF00</color>
+    <color name="green_pressed">#00FF99</color>
+    <color name="black_semi_transparent">#B2000000</color>
+    <color name="background">#e5e5e5</color>
+    <color name="half_black">#808080</color>
+    <color name="black">#000000</color>
+    <color name="white">#fafafa</color>
+    <color name="translate">#00000000</color>
+    <color name="white_pressed">#f1f1f1</color>
+    <color name="pink">#e91e63</color>
+    <color name="pink_pressed">#ec407a</color>
+    <color name="blue_semi_transparent">#805677fc</color>
+    <!--<color name="blue_semi_transparent_pressed">#80738ffe</color>-->
+    <color name="fence_circle_fill_color">#00000000</color>
+    <color name="fence_polygon_fill_color">#00000000</color>
+    <color name="fence_circle_stroke_color">#00FF00</color>
+    <color name="fence_polygon_stroke_color">#FF0000</color>
+    <color name="fence_text_bg_color">#00000000</color>
+    <color name="fence_text_color">#1199aa</color>
+    <color name="line_bg">#CDCDCD</color>
+</resources>
