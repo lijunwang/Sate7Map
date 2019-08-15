@@ -25,4 +25,5 @@
     <color name="fence_text_bg_color">#00000000</color>
     <color name="fence_text_color">#1199aa</color>
     <color name="line_bg">#CDCDCD</color>
+    <color name="track_text_color">#ff0000</color>
 </resources>

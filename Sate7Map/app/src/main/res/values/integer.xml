@@ -11,6 +11,7 @@
     <!-- 点击地图确定完坐标3s后 自动定位到中心 -->
     <integer name="create_fence_time_limit_manual">3000</integer>
     <integer name="view_fence_time_limit_max">8000</integer>
+    <integer name="view_track_time_limit_max">8000</integer>
     <integer name="edit_fence_time_limit">8000</integer>
     <integer name="move_map_time_limit">5000</integer>
 </resources>

@@ -180,11 +180,16 @@ public class FenceListActivity extends AppCompatActivity implements OnItemClickL
 
     @Override
     public void onItemClick(View view, int adapterPosition) {
-        Sate7Fence fence = mFenceAdapter.getSateFence(adapterPosition);
-        XLog.d("onItemClick ... " + adapterPosition + "," + fence);
+        XLog.d("onItemClick ... " + adapterPosition + "," + isTrack);
         Intent intent = getIntent();
-        intent.putExtra("center_fence", true);
-        intent.putExtra("fence", fence);
+        if(isTrack){
+            intent.putExtra("show_track", true);
+            intent.putExtra("track_name", mFenceAdapter.getSateTrackName(adapterPosition));
+        }else{
+            Sate7Fence fence = mFenceAdapter.getSateFence(adapterPosition);
+            intent.putExtra("center_fence", true);
+            intent.putExtra("fence", fence);
+        }
         setResult(RESULT_OK, intent);
         finish();
         overridePendingTransition(0, R.anim.exit_left_to_right);
@@ -203,7 +208,6 @@ public class FenceListActivity extends AppCompatActivity implements OnItemClickL
             fenceDB = new FenceDB(context);
             if (mIsTrack) {
                 trackList = fenceDB.listAllTrackInfo();
-                fenceDB.queryTrackPoints(trackList.get(0).getName());
             } else {
                 fenceList = fenceDB.queryAllFence();
             }
@@ -269,6 +273,10 @@ public class FenceListActivity extends AppCompatActivity implements OnItemClickL
 
         public Sate7Track getSateTrack(int position) {
             return trackList.get(position);
+        }
+
+        public String getSateTrackName(int position) {
+            return trackList.get(position).getName();
         }
 
         private String buildOtherInfo(Sate7Fence fence) {

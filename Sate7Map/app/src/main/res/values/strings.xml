@@ -9,11 +9,14 @@
     <string name="create_circle_fence_hint">Click map to get the center of circle fence.</string>
     <string name="create_polygon_fence_hint">Click the map %d times to get the coordinates of polygon.</string>
     <string name="not_show_no_longer">Don\'t show it again.</string>
-    <string name="delete_fence_title">Are you sure to delete fence %s ?</string>
+    <string name="delete_fence_title">Are you sure to delete fence: %s ?</string>
+    <string name="delete_track_title">Delete or remove track: %s ?</string>
     <string name="sure">Sure</string>
     <string name="net_error">Network is unavailable</string>
     <string name="download_ok">Download completed</string>
     <string name="cancel">Cancel</string>
+    <string name="hide">Hide</string>
+    <string name="remove">Remove(Permanently)</string>
     <string name="fence_type_error">Fence type nonsupport</string>
     <string name="fence_type_error_exist">Fence name has exist</string>
     <string name="monitor_type_error">Monitor type error</string>

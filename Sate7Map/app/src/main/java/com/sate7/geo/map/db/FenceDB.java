@@ -226,6 +226,10 @@ public class FenceDB extends SQLiteOpenHelper {
         return insertTrack(name, lat, lng);
     }
 
+    public int deleteTrackByName(String name) {
+        return getWritableDatabase().delete(TABLE_TRACK, FENCE_COLUMN_NAME + " = ?", new String[]{name});
+    }
+
     public long insertTrack(String name, ArrayList<Double> lats, ArrayList<Double> lngs) {
         JSONObject jsonObjectLat = new JSONObject();
         JSONObject jsonObjectLng = new JSONObject();

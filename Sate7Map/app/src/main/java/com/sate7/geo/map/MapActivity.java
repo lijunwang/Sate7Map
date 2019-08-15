@@ -71,6 +71,7 @@ import com.sate7.geo.map.util.SpHelper;
 import com.sate7.geo.map.util.XLog;
 import com.sate7.geo.map.view.DragableLayout;
 import com.sate7.geo.map.view.SlideFromBottomPopup;
+import com.sate7.geo.map.view.SlideFromBottomPopupPolyline;
 import com.tbruyelle.rxpermissions2.Permission;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.yhao.floatwindow.FloatWindow;
@@ -97,8 +98,6 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
     private FenceDB mFenceDB;
     private final boolean mHintDB = true;
     private RxPermissions mRxPermissions;
-    private final int REQUEST_CODE_OPEN_GPS = 0x10;
-    private final int REQUEST_CODE_NEW_FENCE = 0x11;
     private LocationClient mLocationClient;
     private LocationClientOption mLocationClientOption;
     private MyLocationListener mLocationListener;
@@ -118,10 +117,12 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
     private final int MSG_CONTINUE_CENTER_CREATE_FENCE_MANUAL = 0x114;
     private final int MSG_CONTINUE_CENTER_VIEW_FENCE = 0x115;
     private final int MSG_CONTINUE_CENTER_EDIT_FENCE = 0x116;
+    private final int MSG_CONTINUE_CENTER_VIEW_TRACK = 0x117;
     private int CONTINUE_CENTER_CREATE_FENCE_DELAY_AUTO;
     private int CONTINUE_CENTER_CREATE_FENCE_DELAY_MANUAL;
     private int CONTINUE_CENTER_VIEW_FENCE_DELAY;
     private int CONTINUE_CENTER_EDIT_FENCE_DELAY;
+    private int CONTINUE_CENTER_VIEW_TRACK_DELAY;
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -141,6 +142,9 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
                 case MSG_CONTINUE_CENTER_EDIT_FENCE:
                     mStopCenterForEditFence = false;
                     break;
+                case MSG_CONTINUE_CENTER_VIEW_TRACK:
+                    mStopCenterForViewTrack = false;
+                    break;
             }
         }
     };
@@ -151,8 +155,9 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         setContentView(R.layout.activity_map);
         CONTINUE_CENTER_CREATE_FENCE_DELAY_AUTO = getResources().getInteger(R.integer.create_fence_time_limit_auto);
         CONTINUE_CENTER_CREATE_FENCE_DELAY_MANUAL = getResources().getInteger(R.integer.create_fence_time_limit_manual);
-        CONTINUE_CENTER_VIEW_FENCE_DELAY = getResources().getInteger(R.integer.create_fence_time_limit_manual);
+        CONTINUE_CENTER_VIEW_FENCE_DELAY = getResources().getInteger(R.integer.view_fence_time_limit_max);
         CONTINUE_CENTER_EDIT_FENCE_DELAY = getResources().getInteger(R.integer.edit_fence_time_limit);
+        CONTINUE_CENTER_VIEW_TRACK_DELAY = getResources().getInteger(R.integer.view_track_time_limit_max);
         initViews();
         mRxPermissions = new RxPermissions(this);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -405,6 +410,7 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
     private boolean mStopCenterForEditFence = false;
     private boolean mStopCenterForViewFence = false;
     private boolean mStopCenterForMoveMap = false;
+    private boolean mStopCenterForViewTrack = false;
     private AlertDialog mHintDialog;
     private AlertDialog.Builder mHintDialogBuilder;
 
@@ -429,7 +435,7 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         XLog.d("handleEditFence ww ..." + delete + "," + insert + "," + oldName + "," + fence);
         drawDatabaseFenceInfo();
         moveToMyLocation(new LatLng(fence.getFenceCenterLat(), fence.getFenceCenterLng()));
-        mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER_EDIT_FENCE,CONTINUE_CENTER_EDIT_FENCE_DELAY);
+        mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER_EDIT_FENCE, CONTINUE_CENTER_EDIT_FENCE_DELAY);
     }
 
     @Override
@@ -443,7 +449,7 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
             Sate7Fence fence = data.getExtras().getParcelable("DATA_FENCE");
             boolean selfData = data.getBooleanExtra("SELF_DATA", false) ||
                     (data != null && data.getAction() != null && data.getAction().equals("com.wlj.nani"));
-            XLog.d("onActivityResult fence .. " + selfData + "," + fence);
+            XLog.d("onActivityResult create fence .. " + selfData + "," + fence);
             mBaiduMap.setMapStatus(MapStatusUpdateFactory.zoomTo(mBaiduMap.getMaxZoomLevel() - 2));
 
             if (selfData) {//create fence directly
@@ -467,21 +473,24 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
                 mMapClickListener = new MapClickListener(fence);
                 mBaiduMap.setOnMapClickListener(mMapClickListener);
             }
-
         }
 
         if (requestCode == REQUEST_FENCE_LIST_ACTIVITY && resultCode == Activity.RESULT_OK) {
-            XLog.d("onActivityResult ... " + data);
             if (data.getBooleanExtra("center_fence", false)) {
+                XLog.d("onActivityResult view fence ... ");
                 Sate7Fence fence = data.getParcelableExtra("fence");
-                XLog.d("onActivityResult fence ... " + fence);
                 mStopCenterForViewFence = true;
                 moveToMyLocation(new LatLng(fence.getFenceCenterLat(), fence.getFenceCenterLng()));
                 mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER_VIEW_FENCE, CONTINUE_CENTER_VIEW_FENCE_DELAY);
             }
+            if (data.getBooleanExtra("show_track", false)) {
+                String trackName = data.getStringExtra("track_name");
+                XLog.d("onActivityResult view track ... " + trackName);
+                drawTrack(mFenceDB.queryTrackPoints(trackName), trackName);
+            }
             String[] names = data.getExtras().getStringArray("delete_fence_name");
-            XLog.d("delete fence ... " + Arrays.toString(names));
             if (names != null) {
+                XLog.d("onActivityResult delete fence ... " + Arrays.toString(names));
                 for (String name : names) {
                     deleteMarkerByName(name);
                 }
@@ -583,6 +592,29 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
     @Override
     public boolean onPolylineClick(Polyline polyline) {
         XLog.d("onPolylineClick ... " + polyline.getExtraInfo());
+        final String name = polyline.getExtraInfo().getString("track_name");
+        SlideFromBottomPopupPolyline popup = new SlideFromBottomPopupPolyline(MapActivity.this, new SlideFromBottomPopupPolyline.OnPopupClickListener() {
+            @Override
+            public void onSureClick() {
+                int id = mFenceDB.deleteTrackByName(name);
+                XLog.d("onSureClick delete ..." + id);
+            }
+
+            @Override
+            public void onHideClick() {
+                XLog.d("onHideClick before hide ..." + mTrackOverlays);
+                ArrayList<Overlay> overlays = mTrackOverlays.get(name);
+                for (Overlay overlay : overlays) {
+                    XLog.d("onHideClick remove ... " + overlay.getClass());
+                    overlay.remove();
+                }
+                mTrackOverlays.remove(name);
+                XLog.d("onHideClick after hide ..." + mTrackOverlays);
+            }
+
+        });
+        popup.showPopupWindow();
+        popup.setTitle(getResources().getString(R.string.delete_track_title, name));
         return false;
     }
 
@@ -825,7 +857,9 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         mapView = null;
     }
 
-    private final int REQUEST_FENCE_LIST_ACTIVITY = 0x1111;
+    private final int REQUEST_CODE_OPEN_GPS = 0x10;
+    private final int REQUEST_CODE_NEW_FENCE = 0x11;
+    private final int REQUEST_FENCE_LIST_ACTIVITY = 0x12;
 
     @Override
     public void onClick(View v) {
@@ -862,7 +896,7 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
 //                mFenceDB.clearAllFence();
                 intent = new Intent(this, FenceListActivity.class);
                 intent.putExtra("ListTrack", true);
-                startActivity(intent);
+                startActivityForResult(intent, REQUEST_FENCE_LIST_ACTIVITY);
                 break;
             case R.id.action_settings:
                 startActivity(new Intent(this, SettingsActivity.class));
@@ -895,6 +929,17 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         mBaiduMap.animateMapStatus(mMapStatusUpdate);
     }
 
+    private void moveToMyLocation(LatLng center, float level) {
+        MapStatus mMapStatus = new MapStatus.Builder()
+                .target(center)
+                .zoom(level)
+                .build();
+        //定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
+        MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory.newMapStatus(mMapStatus);
+        //改变地图状态
+        mBaiduMap.animateMapStatus(mMapStatusUpdate);
+    }
+
     private BDLocation mLastBDLocation;
     private MyLocationData myLocationData;
 
@@ -910,7 +955,8 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
                     mStopCenterForCreateFenceAuto ||
                     mStopCenterForCreateFenceManual ||
                     mStopCenterForEditFence ||
-                    mStopCenterForViewFence) {
+                    mStopCenterForViewFence ||
+                    mStopCenterForViewTrack) {
                 return;
             }
             myLocationData = new MyLocationData.Builder()
@@ -1028,6 +1074,34 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
             }
             mTrackOverlay = mBaiduMap.addOverlay(mTrackPolyline);
         }
+    }
+
+
+    private PolylineOptions mTrackPolylineShow = new PolylineOptions().width(10).color(0xAA00FF00);
+    private HashMap<String, ArrayList<Overlay>> mTrackOverlays = new HashMap();
+
+    private void drawTrack(ArrayList<LatLng> points, String trackName) {
+        ArrayList<Overlay> overlayList = new ArrayList<>();
+        Bundle bundle = new Bundle();
+        bundle.putString("track_name", trackName);
+        mTrackPolylineShow.points(points);
+        mTrackPolylineShow.extraInfo(bundle);
+        //路线overlay
+        Overlay overlayLine = mBaiduMap.addOverlay(mTrackPolylineShow);
+        //TextView overlay
+        TextOptions textOptions = new TextOptions()
+                .text(trackName) //文字内容
+                .bgColor(getResources().getColor(R.color.fence_text_bg_color)) //背景色
+                .fontSize(getResources().getDimensionPixelSize(R.dimen.fenc_text_size)) //字号
+                .fontColor(getResources().getColor(R.color.track_text_color)) //文字颜色
+                .position(points.get(points.size() / 2));
+        Overlay overlayText = mBaiduMap.addOverlay(textOptions);
+        overlayList.add(overlayLine);
+        overlayList.add(overlayText);
+        mTrackOverlays.put(trackName, overlayList);
+        moveToMyLocation(points.get(points.size() / 2), mBaiduMap.getMaxZoomLevel() - 2);
+        mStopCenterForViewTrack = true;
+        mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER_VIEW_TRACK, CONTINUE_CENTER_VIEW_TRACK_DELAY);
     }
 
 
