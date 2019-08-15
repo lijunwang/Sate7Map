@@ -43,7 +43,20 @@ public class FenceListActivity extends AppCompatActivity implements OnItemClickL
     private FenceAdapter mFenceAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private boolean isTrack = false;
-    private SwipeMenuCreator creator = new SwipeMenuCreator() {
+    private SwipeMenuCreator creator1 = new SwipeMenuCreator() {
+        @Override
+        public void onCreateMenu(SwipeMenu leftMenu, SwipeMenu rightMenu, int position) {
+            SwipeMenuItem deleteItem = new SwipeMenuItem(FenceListActivity.this).setBackground(
+                    R.drawable.selector_red)
+                    .setImage(R.mipmap.ic_action_delete)
+                    .setText(getResources().getString(R.string.delete))
+                    .setTextColor(Color.WHITE)
+                    .setWidth(200)
+                    .setHeight(getResources().getDimensionPixelSize(R.dimen.item_height));
+            rightMenu.addMenuItem(deleteItem);
+        }
+    };
+    private SwipeMenuCreator creator2 = new SwipeMenuCreator() {
         @Override
         public void onCreateMenu(SwipeMenu leftMenu, SwipeMenu rightMenu, int position) {
             SwipeMenuItem deleteItem = new SwipeMenuItem(FenceListActivity.this).setBackground(
@@ -62,7 +75,6 @@ public class FenceListActivity extends AppCompatActivity implements OnItemClickL
                     .setHeight(getResources().getDimensionPixelSize(R.dimen.item_height));
             rightMenu.addMenuItem(deleteItem);// 添加一个按钮到右侧侧菜单。
             rightMenu.addMenuItem(editItem);
-            leftMenu.addMenuItem(deleteItem);
         }
     };
     private OnItemMenuClickListener clickListener = new OnItemMenuClickListener() {
@@ -107,7 +119,7 @@ public class FenceListActivity extends AppCompatActivity implements OnItemClickL
 
         mRecyclerView = findViewById(R.id.recyclerView);
         mFenceAdapter = new FenceAdapter(this, isTrack);
-        mRecyclerView.setSwipeMenuCreator(creator);
+        mRecyclerView.setSwipeMenuCreator(isTrack ? creator1 : creator2);
         mRecyclerView.setOnItemMenuClickListener(clickListener);
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -191,6 +203,7 @@ public class FenceListActivity extends AppCompatActivity implements OnItemClickL
             fenceDB = new FenceDB(context);
             if (mIsTrack) {
                 trackList = fenceDB.listAllTrackInfo();
+                fenceDB.queryTrackPoints(trackList.get(0).getName());
             } else {
                 fenceList = fenceDB.queryAllFence();
             }

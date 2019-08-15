@@ -17,21 +17,13 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.text.TextUtils;
-import android.util.Log;
-import android.util.SparseBooleanArray;
-import android.view.DragEvent;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.BounceInterpolator;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.PopupWindow;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -98,7 +90,7 @@ import java.util.Set;
 
 import io.reactivex.functions.Consumer;
 
-public class MapActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener, BaiduMap.OnMarkerClickListener, BaiduMap.OnPolylineClickListener, SharedPreferences.OnSharedPreferenceChangeListener {
+public class MapActivity extends AppCompatActivity implements View.OnClickListener, BaiduMap.OnMarkerClickListener, BaiduMap.OnPolylineClickListener, SharedPreferences.OnSharedPreferenceChangeListener {
     private MapView mapView;
     private BaiduMap mBaiduMap;
     private ArrayList<LatLng> mTraceData = new ArrayList();
@@ -122,12 +114,32 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
     private DragableLayout mSaveTrackContainer;
     private ImageView mMyLocation;
     private final int MSG_CONTINUE_CENTER = 0x112;
+    private final int MSG_CONTINUE_CENTER_CREATE_FENCE_AUTO = 0x113;
+    private final int MSG_CONTINUE_CENTER_CREATE_FENCE_MANUAL = 0x114;
+    private final int MSG_CONTINUE_CENTER_VIEW_FENCE = 0x115;
+    private final int MSG_CONTINUE_CENTER_EDIT_FENCE = 0x116;
+    private int CONTINUE_CENTER_CREATE_FENCE_DELAY_AUTO;
+    private int CONTINUE_CENTER_CREATE_FENCE_DELAY_MANUAL;
+    private int CONTINUE_CENTER_VIEW_FENCE_DELAY;
+    private int CONTINUE_CENTER_EDIT_FENCE_DELAY;
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_CONTINUE_CENTER:
                     mStopCenter = false;
+                    break;
+                case MSG_CONTINUE_CENTER_CREATE_FENCE_AUTO:
+                    mStopCenterForCreateFenceAuto = false;
+                    break;
+                case MSG_CONTINUE_CENTER_CREATE_FENCE_MANUAL:
+                    mStopCenterForCreateFenceManual = false;
+                    break;
+                case MSG_CONTINUE_CENTER_VIEW_FENCE:
+                    mStopCenterForViewFence = false;
+                    break;
+                case MSG_CONTINUE_CENTER_EDIT_FENCE:
+                    mStopCenterForEditFence = false;
                     break;
             }
         }
@@ -137,6 +149,10 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+        CONTINUE_CENTER_CREATE_FENCE_DELAY_AUTO = getResources().getInteger(R.integer.create_fence_time_limit_auto);
+        CONTINUE_CENTER_CREATE_FENCE_DELAY_MANUAL = getResources().getInteger(R.integer.create_fence_time_limit_manual);
+        CONTINUE_CENTER_VIEW_FENCE_DELAY = getResources().getInteger(R.integer.create_fence_time_limit_manual);
+        CONTINUE_CENTER_EDIT_FENCE_DELAY = getResources().getInteger(R.integer.edit_fence_time_limit);
         initViews();
         mRxPermissions = new RxPermissions(this);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -358,7 +374,6 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
     protected void onPause() {
         super.onPause();
         mapView.onPause();
-        hidFloatWindow();
     }
 
 
@@ -385,6 +400,11 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
 
     private boolean mStartTack = false;
     private boolean mStopCenter = false;
+    private boolean mStopCenterForCreateFenceAuto = false;
+    private boolean mStopCenterForCreateFenceManual = false;
+    private boolean mStopCenterForEditFence = false;
+    private boolean mStopCenterForViewFence = false;
+    private boolean mStopCenterForMoveMap = false;
     private AlertDialog mHintDialog;
     private AlertDialog.Builder mHintDialogBuilder;
 
@@ -404,10 +424,12 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         //remove first;
         int delete = mFenceDB.deleteByFenceName(oldName);
         long insert = mFenceDB.insertFence(fence);
+        mStopCenterForEditFence = true;
         deleteMarkerByName(oldName);
         XLog.d("handleEditFence ww ..." + delete + "," + insert + "," + oldName + "," + fence);
         drawDatabaseFenceInfo();
-        //then add;
+        moveToMyLocation(new LatLng(fence.getFenceCenterLat(), fence.getFenceCenterLng()));
+        mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER_EDIT_FENCE,CONTINUE_CENTER_EDIT_FENCE_DELAY);
     }
 
     @Override
@@ -423,11 +445,13 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
                     (data != null && data.getAction() != null && data.getAction().equals("com.wlj.nani"));
             XLog.d("onActivityResult fence .. " + selfData + "," + fence);
             mBaiduMap.setMapStatus(MapStatusUpdateFactory.zoomTo(mBaiduMap.getMaxZoomLevel() - 2));
-            mStopCenter = true;
-            mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER, 20000);
+
             if (selfData) {//create fence directly
+                mStopCenterForCreateFenceAuto = true;
+                mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER_CREATE_FENCE_AUTO, CONTINUE_CENTER_CREATE_FENCE_DELAY_AUTO);
                 mPointLists.clear();
                 mPolygonMarkers.clear();
+                moveToMyLocation(new LatLng(fence.getFenceCenterLat(), fence.getFenceCenterLng()));
                 if (fence.getFenceShape() == Sate7Fence.FENCE_TYPE_CIRCLE) {
                     addCircleFence(fence, new LatLng(fence.getFenceCenterLat(), fence.getFenceCenterLng()));
                 } else if (fence.getFenceShape() == Sate7Fence.FENCE_TYPE_POLYGON) {
@@ -438,6 +462,7 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
                 mPointLists.clear();
                 mPolygonMarkers.clear();
             } else {
+                mStopCenterForCreateFenceManual = true;
                 showHintDialogIfNeeded(fence);
                 mMapClickListener = new MapClickListener(fence);
                 mBaiduMap.setOnMapClickListener(mMapClickListener);
@@ -450,9 +475,9 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
             if (data.getBooleanExtra("center_fence", false)) {
                 Sate7Fence fence = data.getParcelableExtra("fence");
                 XLog.d("onActivityResult fence ... " + fence);
-                mStopCenter = true;
+                mStopCenterForViewFence = true;
                 moveToMyLocation(new LatLng(fence.getFenceCenterLat(), fence.getFenceCenterLng()));
-                mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER, 10000);
+                mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER_VIEW_FENCE, CONTINUE_CENTER_VIEW_FENCE_DELAY);
             }
             String[] names = data.getExtras().getStringArray("delete_fence_name");
             XLog.d("delete fence ... " + Arrays.toString(names));
@@ -461,17 +486,6 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
                     deleteMarkerByName(name);
                 }
             }
-
-            //after edit
-            Sate7Fence fence = data.getParcelableExtra("edit_fence");
-            String oldFenceName = data.getStringExtra("old_name");
-            XLog.d("edit fence == " + oldFenceName + "," + fence);
-
-        }
-        if (REQUEST_ALERT_WINDOW == requestCode && resultCode == Activity.RESULT_OK) {
-            showFloatWindow();
-        } else if (REQUEST_ALERT_WINDOW == requestCode && resultCode != Activity.RESULT_OK) {
-            requestOverlayPermission();
         }
     }
 
@@ -599,16 +613,19 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
                             dialog.dismiss();
                             mBaiduMap.setOnMapClickListener(null);
                             addCircleFence(fence, latLng);
+                            mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER_CREATE_FENCE_MANUAL, CONTINUE_CENTER_CREATE_FENCE_DELAY_MANUAL);
                         }
                     }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             dialog.dismiss();
                             mBaiduMap.setOnMapClickListener(null);
+                            mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER_CREATE_FENCE_MANUAL, CONTINUE_CENTER_CREATE_FENCE_DELAY_MANUAL);
                         }
                     }).setCancelable(false).show();
                 } else {
                     addCircleFence(fence, latLng);
+                    mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER_CREATE_FENCE_MANUAL, CONTINUE_CENTER_CREATE_FENCE_DELAY_MANUAL);
                 }
 
             } else if (fence.getFenceShape() == Sate7Fence.FENCE_TYPE_POLYGON) {
@@ -619,11 +636,6 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         @Override
         public boolean onMapPoiClick(MapPoi mapPoi) {
             XLog.d("onMapPoiClick BB ..." + mapPoi.getPosition().latitude + "," + mapPoi.getPosition().latitudeE6 + "," + mapPoi.getPosition().longitude + "," + mapPoi.getPosition().longitudeE6);
-            /*if (fence.getFenceShape() == Sate7Fence.FENCE_TYPE_CIRCLE) {
-                addCircleFence(fence, mapPoi.getPosition());
-            } else if (fence.getFenceShape() == Sate7Fence.FENCE_TYPE_POLYGON) {
-                addPolygonFence(fence, mapPoi.getPosition());
-            }*/
             return false;
         }
     }
@@ -665,7 +677,52 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         mFenceOverlayMaps.put(fence.getFenceName(), overlays);
     }
 
-    private void addPolygonFence(Sate7Fence fence, LatLng current) {
+    private void realAddPolygonFence(Sate7Fence fence) {
+        XLog.d("realAddPolygonFence ...");
+        //draw Polygon
+        PolygonOptions mPolygonOptions = new PolygonOptions()
+                .points(mPointLists)
+                .fillColor(getResources().getColor(R.color.fence_polygon_fill_color)) //填充颜色
+                .stroke(new Stroke(5, getResources().getColor(R.color.fence_polygon_stroke_color))); //边框宽度和颜色
+        Overlay fenceOverlay = mBaiduMap.addOverlay(mPolygonOptions);
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        for (LatLng latLng : mPointLists) {
+            builder.include(latLng);
+            fence.addPolygonPointLatLng(latLng);
+        }
+        LatLng center = builder.build().getCenter();
+        fence.setFenceCenterLng(center.longitude);
+        fence.setFenceCenterLat(center.latitude);
+        //save this points to Database
+        long id = mFenceDB.insertFence(fence);
+        if (id > 0) {
+            synchronized (mFenceList) {
+                mFenceList.add(fence);
+                mFenceInOutStateMap.put(fence.getFenceName(), false);
+            }
+        }
+        for (Overlay overlay : mPolygonMarkers) {
+            overlay.remove();
+        }
+        mPolygonMarkers.clear();
+        Overlay centerOverlay = addPointMarker(center, BitmapDescriptorFactory.fromResource(R.mipmap.icon_markx), fence.getFenceName());
+        OverlayOptions mTextOptions = new TextOptions()
+                .text(fence.getFenceName()) //文字内容
+                .bgColor(getResources().getColor(R.color.fence_text_bg_color)) //背景色
+                .fontSize(getResources().getDimensionPixelSize(R.dimen.fenc_text_size)) //字号
+                .fontColor(getResources().getColor(R.color.fence_text_color)) //文字颜色
+                .position(center);
+        Overlay textOverlay = mBaiduMap.addOverlay(mTextOptions);
+        mBaiduMap.setOnMapClickListener(null);
+        ArrayList<Overlay> overlays = new ArrayList<>();
+        overlays.add(fenceOverlay);
+        overlays.add(centerOverlay);
+        overlays.add(textOverlay);
+        mPointLists.clear();
+        mFenceOverlayMaps.put(fence.getFenceName(), overlays);
+    }
+
+    private void addPolygonFence(final Sate7Fence fence, LatLng current) {
         XLog.d("addPolygonFence ...");
         if (fence.getFenceShape() != Sate7Fence.FENCE_TYPE_POLYGON) {
             throw new IllegalArgumentException("addPolygonFence only is invoke by FENCE_TYPE_POLYGON");
@@ -676,46 +733,34 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
             addPolygonPointMarker(current);
         }
         if (mPointLists.size() == fence.getFencePolygonPoints()) {
-            //draw Polygon
-            PolygonOptions mPolygonOptions = new PolygonOptions()
-                    .points(mPointLists)
-                    .fillColor(getResources().getColor(R.color.fence_polygon_fill_color)) //填充颜色
-                    .stroke(new Stroke(5, getResources().getColor(R.color.fence_polygon_stroke_color))); //边框宽度和颜色
-            Overlay fenceOverlay = mBaiduMap.addOverlay(mPolygonOptions);
-            LatLngBounds.Builder builder = new LatLngBounds.Builder();
-            for (LatLng latLng : mPointLists) {
-                builder.include(latLng);
-                fence.addPolygonPointLatLng(latLng);
+            if (SpHelper.needLastSure()) {
+                new AlertDialog.Builder(MapActivity.this).setTitle(R.string.create_fence).setMessage(R.string.create_fence_message).setPositiveButton(R.string.sure, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        mBaiduMap.setOnMapClickListener(null);
+                        realAddPolygonFence(fence);
+                        mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER_CREATE_FENCE_MANUAL, CONTINUE_CENTER_CREATE_FENCE_DELAY_MANUAL);
+                    }
+                }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        mBaiduMap.setOnMapClickListener(null);
+                        //remove the Point Marker
+                        for (Overlay overlay : mPolygonMarkers) {
+                            overlay.remove();
+                        }
+                        mPolygonMarkers.clear();
+                        mPointLists.clear();
+                        mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER_CREATE_FENCE_MANUAL, CONTINUE_CENTER_CREATE_FENCE_DELAY_MANUAL);
+                    }
+                }).setCancelable(false).show();
+            } else {
+                realAddPolygonFence(fence);
+                mHandler.sendEmptyMessageDelayed(MSG_CONTINUE_CENTER_CREATE_FENCE_MANUAL, CONTINUE_CENTER_CREATE_FENCE_DELAY_MANUAL);
             }
-            LatLng center = builder.build().getCenter();
-            fence.setFenceCenterLng(center.longitude);
-            fence.setFenceCenterLat(center.latitude);
-            //save this points to Database
-            long id = mFenceDB.insertFence(fence);
-            if (id > 0) {
-                synchronized (mFenceList) {
-                    mFenceList.add(fence);
-                    mFenceInOutStateMap.put(fence.getFenceName(), false);
-                }
-            }
-            for (Overlay overlay : mPolygonMarkers) {
-                overlay.remove();
-            }
-            Overlay centerOverlay = addPointMarker(center, BitmapDescriptorFactory.fromResource(R.mipmap.icon_markx), fence.getFenceName());
-            OverlayOptions mTextOptions = new TextOptions()
-                    .text(fence.getFenceName()) //文字内容
-                    .bgColor(getResources().getColor(R.color.fence_text_bg_color)) //背景色
-                    .fontSize(getResources().getDimensionPixelSize(R.dimen.fenc_text_size)) //字号
-                    .fontColor(getResources().getColor(R.color.fence_text_color)) //文字颜色
-                    .position(center);
-            Overlay textOverlay = mBaiduMap.addOverlay(mTextOptions);
-            mBaiduMap.setOnMapClickListener(null);
-            ArrayList<Overlay> overlays = new ArrayList<>();
-            overlays.add(fenceOverlay);
-            overlays.add(centerOverlay);
-            overlays.add(textOverlay);
-            mPointLists.clear();
-            mFenceOverlayMaps.put(fence.getFenceName(), overlays);
+
         }
     }
 
@@ -763,7 +808,6 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
     public void onBackPressed() {
 //        super.onBackPressed();
         goHome();
-        hidFloatWindow();
     }
 
     private void goHome() {
@@ -779,7 +823,6 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         mBaiduMap.setMyLocationEnabled(false);
         mapView.onDestroy();
         mapView = null;
-        FloatWindow.destroy(FLOAT_WINDOW_TRACK_TAG);
     }
 
     private final int REQUEST_FENCE_LIST_ACTIVITY = 0x1111;
@@ -852,47 +895,30 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         mBaiduMap.animateMapStatus(mMapStatusUpdate);
     }
 
-    @Override
-    public boolean onLongClick(View v) {
-        XLog.dLocation("onLongClick ..." + v.getId());
-        switch (v.getId()) {
-            case R.id.action_new_fence:
-                mFloatingAddFence.setTitle(getResources().getString(R.string.map_add_fence));
-                break;
-            case R.id.action_query_fence:
-                mFloatingQueryFence.setTitle(getResources().getString(R.string.map_query_fence));
-                break;
-            case R.id.action_record_track:
-                mFloatingRecordTrack.setTitle(getResources().getString(R.string.map_record_track));
-                break;
-            case R.id.action_query_track:
-                mFloatingQueryTrack.setTitle(getResources().getString(R.string.map_query_track));
-                break;
-            default:
-                break;
-        }
-        return false;
-    }
-
     private BDLocation mLastBDLocation;
+    private MyLocationData myLocationData;
 
     private class MyLocationListener extends BDAbstractLocationListener {
         @Override
         public void onReceiveLocation(BDLocation bdLocation) {
-//            BDLocation.TypeNetWorkLocation
-//            bdLocation.getLocType();
             XLog.dLocation("onReceiveLocation ww22 ... " + bdLocation.getLongitude() + "," + bdLocation.getLatitude() + "," + mStopCenter + "," + mStartTack);
             mLastBDLocation = bdLocation;
             //mapView 销毁后不在处理新接收的位置
-            if (bdLocation == null || mapView == null || mStopCenter) {
+            if (bdLocation == null || mapView == null ||
+                    mStopCenter ||
+                    mStopCenterForMoveMap ||
+                    mStopCenterForCreateFenceAuto ||
+                    mStopCenterForCreateFenceManual ||
+                    mStopCenterForEditFence ||
+                    mStopCenterForViewFence) {
                 return;
             }
-            MyLocationData locData = new MyLocationData.Builder()
+            myLocationData = new MyLocationData.Builder()
                     .accuracy(bdLocation.getRadius())
                     // 此处设置开发者获取到的方向信息，顺时针0-360
                     .direction(bdLocation.getDirection()).latitude(bdLocation.getLatitude())
                     .longitude(bdLocation.getLongitude()).build();
-            mBaiduMap.setMyLocationData(locData);
+            mBaiduMap.setMyLocationData(myLocationData);
             if (mStartTack) {
                 startTrack(bdLocation);
             }
@@ -902,7 +928,6 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
     }
 
     private HashMap<String, Boolean> mFenceInOutStateMap = new HashMap<>();
-    private boolean firstInitialize = true;
     private StringBuilder debugStringBuild = new StringBuilder();
     private boolean currentInFence = false;
     private boolean lastTimeInFence = false;
@@ -917,10 +942,10 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         for (Sate7Fence fence : mFenceList) {
             currentInFence = inFence(fence, current);
             lastTimeInFence = mFenceInOutStateMap.get(fence.getFenceName());
-            debugStringBuild.append(fence.getFenceName() + "\n当前是否在围栏:" + currentInFence +
+            /*debugStringBuild.append(fence.getFenceName() + "\n当前是否在围栏:" + currentInFence +
                     "\n上次是否在围栏:" + lastTimeInFence +
                     "\n是否改变了:" + (lastTimeInFence != currentInFence) +
-                    "\n更新前HashMap:" + mFenceInOutStateMap);
+                    "\n更新前HashMap:" + mFenceInOutStateMap);*/
             XLog.dFenceDB("fence === " + getFenceNotifyType(fence));
             if (currentInFence != lastTimeInFence) {
                 if (currentInFence &&
@@ -935,7 +960,7 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
                 }
             }
             mFenceInOutStateMap.put(fence.getFenceName(), currentInFence);
-            debugStringBuild.append("\n更新后HashMap:" + mFenceInOutStateMap);
+//            debugStringBuild.append("\n更新后HashMap:" + mFenceInOutStateMap);
         }
 //        mDebugInfo.setText(debugStringBuild.toString());
     }
@@ -1065,60 +1090,5 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
                 mSaveTrackContainer.setVisibility(View.GONE);
             }
         });
-    }
-
-    //请求悬浮窗权限
-    private final String FLOAT_WINDOW_TRACK_TAG = "Track";
-    private final int REQUEST_ALERT_WINDOW = 100;
-
-    private boolean isCanOverlays() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return Settings.canDrawOverlays(this);
-        } else {
-            return true;
-        }
-    }
-
-    private void requestOverlayPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
-            intent.setData(Uri.parse("package:" + getPackageName()));
-            startActivityForResult(intent, REQUEST_ALERT_WINDOW);
-        }
-    }
-
-    private void showFloatWindow() {
-        if (FloatWindow.get(FLOAT_WINDOW_TRACK_TAG) == null) {
-            XLog.d("showFloatWindow AA ...");
-            ImageView imageView = new ImageView(getApplicationContext());
-            imageView.setImageResource(R.mipmap.stop_track_and_save);
-            imageView.setId(R.id.float_window_button);
-            imageView.setOnClickListener(this);
-            FloatWindow
-                    .with(getApplicationContext())
-                    .setView(imageView)
-                    .setWidth(Screen.width, 0.2f) //设置悬浮控件宽高
-                    .setHeight(Screen.width, 0.2f)
-                    .setX(Screen.width, 0.8f)
-                    .setY(Screen.height, 0.3f)
-                    .setMoveType(MoveType.slide, -10, -10)
-                    .setMoveStyle(500, new BounceInterpolator())
-                    .setFilter(true, MapActivity.class)
-                    .setDesktopShow(false)
-                    .setViewStateListener(null)
-                    .setTag(FLOAT_WINDOW_TRACK_TAG)
-                    .build();
-
-            FloatWindow.get(FLOAT_WINDOW_TRACK_TAG).show();
-        } else {
-            XLog.d("showFloatWindow BB ...");
-            FloatWindow.get(FLOAT_WINDOW_TRACK_TAG).show();
-        }
-    }
-
-    public void hidFloatWindow() {
-        if (FloatWindow.get(FLOAT_WINDOW_TRACK_TAG) != null) {
-            FloatWindow.get(FLOAT_WINDOW_TRACK_TAG).hide();
-        }
     }
 }

@@ -287,6 +287,32 @@ public class FenceDB extends SQLiteOpenHelper {
         return tracks;
     }
 
+    public ArrayList<LatLng> queryTrackPoints(String name) {
+        XLog.dFenceDB("queryTrackPoints aa ... " + name);
+        Cursor cursor = getWritableDatabase().query(TABLE_TRACK, mSelectionTrack, "track_name = ?", new String[]{name}, null, null, "created_time");
+        if (cursor.moveToFirst()) {
+            try {
+                XLog.dFenceDB("queryTrackPoints bb ... " + name + "," + cursor.getCount());
+                String jsonLats = cursor.getString(2);
+                String jsonLngs = cursor.getString(3);
+                JSONObject lats = new JSONObject(jsonLats);
+                JSONObject lngs = new JSONObject(jsonLngs);
+                JSONArray latsArrays = lats.optJSONArray("track_points_lat");
+                JSONArray lngsArrays = lngs.optJSONArray("track_points_lng");
+                int lengthLat = latsArrays.length();
+                ArrayList<LatLng> mPointList = new ArrayList<>(lengthLat);
+                for (int i = 0; i < lengthLat; i++) {
+                    mPointList.add(new LatLng((double) latsArrays.get(i), (double) lngsArrays.get(i)));
+                }
+                return mPointList;
+            } catch (Exception e) {
+                XLog.dFenceDB("Exception ... " + e.getMessage());
+            }
+        }
+        cursor.close();
+        return new ArrayList<>();
+    }
+
     public void queryTrack() {
         Cursor cursor = getWritableDatabase().query(TABLE_TRACK, mSelectionTrack, null, null, null, null, "created_time");
         if (cursor.moveToFirst()) {
