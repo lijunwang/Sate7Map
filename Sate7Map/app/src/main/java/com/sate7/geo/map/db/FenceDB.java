@@ -26,14 +26,18 @@ import java.util.HashSet;
 
 public class FenceDB extends SQLiteOpenHelper {
     private static final String DB_NAME = "Sate7Map.db";
-    private static final int DB_VERSION = 11;
+    private static final int DB_VERSION = 16;
     public static final String TABLE_FENCE = "fence";
     public static final String TABLE_TRACK = "track";
     public static final String FENCE_COLUMN_NAME = "name";//不能重复
     public static final String FENCE_COLUMN_CREATE_DATE = "created_time";
     public static final String FENCE_COLUMN_MONITOR_TYPE = "monitor_type";
+    public static final String FENCE_COLUMN_START_MONTH = "start_month";
+    public static final String FENCE_COLUMN_START_DAY = "start_day";
     public static final String FENCE_COLUMN_START_HOUR = "start_hour";
     public static final String FENCE_COLUMN_START_MINUTE = "start_minute";
+    public static final String FENCE_COLUMN_END_MONTH = "end_month";
+    public static final String FENCE_COLUMN_END_DAY = "end_day";
     public static final String FENCE_COLUMN_END_HOUR = "end_hour";
     public static final String FENCE_COLUMN_END_MINUTE = "end_minute";
     public static final String FENCE_COLUMN_FENCE_SHAPE = "fence_type";
@@ -45,6 +49,7 @@ public class FenceDB extends SQLiteOpenHelper {
             FENCE_COLUMN_START_HOUR, FENCE_COLUMN_START_MINUTE, FENCE_COLUMN_END_HOUR,
             FENCE_COLUMN_END_MINUTE, FENCE_COLUMN_FENCE_SHAPE, FENCE_COLUMN_CIRCLE_RADIUS,
             FENCE_COLUMN_CENTER_LAT, FENCE_COLUMN_CENTER_LNG, FENCE_COLUMN_POLYGON_POINTS, FENCE_COLUMN_CREATE_DATE,
+            FENCE_COLUMN_START_MONTH, FENCE_COLUMN_START_DAY, FENCE_COLUMN_END_MONTH, FENCE_COLUMN_END_DAY,
             "fence_polygon_point1Lat", "fence_polygon_point1Lng", "fence_polygon_point2Lat", "fence_polygon_point2Lng",
             "fence_polygon_point3Lat", "fence_polygon_point3Lng", "fence_polygon_point4Lat", "fence_polygon_point4Lng",
             "fence_polygon_point5Lat", "fence_polygon_point5Lng", "fence_polygon_point6Lat", "fence_polygon_point6Lng",
@@ -67,8 +72,12 @@ public class FenceDB extends SQLiteOpenHelper {
             + "created_time TimeStamp NOT NULL DEFAULT (datetime('now','localtime')),"
             + "name varchar not null,"
             + "monitor_type integer not null,"
+            + "start_month integer not null,"
+            + "start_day integer not null,"
             + "start_hour integer not null,"
             + "start_minute integer not null,"
+            + "end_month integer not null,"
+            + "end_day integer not null,"
             + "end_hour integer not null,"
             + "end_minute integer not null,"
             + "fence_type integer not null,"
@@ -132,8 +141,12 @@ public class FenceDB extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(FENCE_COLUMN_NAME, fence.getFenceName());
         values.put(FENCE_COLUMN_MONITOR_TYPE, fence.getMonitorMode());
+        values.put(FENCE_COLUMN_START_MONTH, fence.getMonitorStartMonth());
+        values.put(FENCE_COLUMN_START_DAY, fence.getMonitorStartDay());
         values.put(FENCE_COLUMN_START_HOUR, fence.getMonitorStartHour());
         values.put(FENCE_COLUMN_START_MINUTE, fence.getMonitorStartMinute());
+        values.put(FENCE_COLUMN_END_MONTH, fence.getMonitorEndMonth());
+        values.put(FENCE_COLUMN_END_DAY, fence.getMonitorEndDay());
         values.put(FENCE_COLUMN_END_HOUR, fence.getMonitorEndHour());
         values.put(FENCE_COLUMN_END_MINUTE, fence.getMonitorEndMinute());
         values.put(FENCE_COLUMN_FENCE_SHAPE, fence.getFenceShape());
@@ -175,12 +188,17 @@ public class FenceDB extends SQLiteOpenHelper {
                 double centerLng = cursor.getDouble(9);
                 int polygonPoints = cursor.getInt(10);
                 String timeStamp = cursor.getString(11);
-                fence = new Sate7Fence(fenceName, monitorType, startHour, startMinute, endHour, endMinute, shape, radius, centerLat, centerLng, polygonPoints);
+                int startMonth = cursor.getInt(12);
+                int startDay = cursor.getInt(13);
+                int endMonth = cursor.getInt(14);
+                int endDay = cursor.getInt(15);
+                fence = new Sate7Fence(fenceName, monitorType, startMonth, startDay, startHour, startMinute, endMonth, endDay,
+                        endHour, endMinute, shape, radius, centerLat, centerLng, polygonPoints);
                 fence.setDateInfo(timeStamp);
 //                XLog.dFenceDB("time debug ... " + timeStamp);
                 if (shape == Sate7Fence.FENCE_TYPE_POLYGON) {
                     for (int i = 0; i < polygonPoints; i++) {
-                        fence.addPolygonPointLatLng(new LatLng(cursor.getDouble(12 + i * 2), cursor.getDouble(13 + i * 2)));
+                        fence.addPolygonPointLatLng(new LatLng(cursor.getDouble(16 + i * 2), cursor.getDouble(13 + i * 2)));
                     }
                 }
                 fenceList.add(fence);
@@ -227,7 +245,7 @@ public class FenceDB extends SQLiteOpenHelper {
     }
 
     public int deleteTrackByName(String name) {
-        return getWritableDatabase().delete(TABLE_TRACK, FENCE_COLUMN_NAME + " = ?", new String[]{name});
+        return getWritableDatabase().delete(TABLE_TRACK, "track_name = ?", new String[]{name});
     }
 
     public long insertTrack(String name, ArrayList<Double> lats, ArrayList<Double> lngs) {

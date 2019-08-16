@@ -82,6 +82,11 @@ public class FenceListActivity extends AppCompatActivity implements OnItemClickL
         public void onItemClick(SwipeMenuBridge menuBridge, int adapterPosition) {
             XLog.d("clickListener ... " + adapterPosition + "," + menuBridge.getDirection() + "," + menuBridge.getPosition());
 //            mFenceAdapter
+            if (isTrack && menuBridge.getDirection() == SwipeRecyclerView.RIGHT_DIRECTION && menuBridge.getPosition() == 0) {
+                menuBridge.closeMenu();
+                mFenceAdapter.deleteTrack(adapterPosition);
+                return;
+            }
             if (menuBridge.getDirection() == SwipeRecyclerView.RIGHT_DIRECTION && menuBridge.getPosition() == 0) {
                 menuBridge.closeMenu();
                 mFenceAdapter.deleteFence(adapterPosition);
@@ -89,7 +94,7 @@ public class FenceListActivity extends AppCompatActivity implements OnItemClickL
             }
             if (menuBridge.getDirection() == SwipeRecyclerView.RIGHT_DIRECTION && menuBridge.getPosition() == 1) {
                 menuBridge.closeMenu();
-//                mFenceAdapter.deleteFence(adapterPosition);
+                mFenceAdapter.deleteFence(adapterPosition);
                 XLog.d("edit ...");
                 Intent intent = new Intent(FenceListActivity.this, FenceOptionActivity.class);
                 intent.putExtra("fence", mFenceAdapter.getSateFence(adapterPosition));
@@ -147,9 +152,18 @@ public class FenceListActivity extends AppCompatActivity implements OnItemClickL
     }
 
     private ArrayList<String> mDeleteFence = new ArrayList<>();
+    private ArrayList<String> mDeleteTrack = new ArrayList<>();
 
     private void returnDeleteFenceData() {
-        XLog.d("returnDeleteFenceData ..." + mDeleteFence);
+        XLog.d("returnDeleteFenceData ..." + isTrack + "," + mDeleteFence + "," + mDeleteTrack);
+        if (isTrack && !mDeleteTrack.isEmpty()) {
+            Bundle bundle = new Bundle();
+            String[] names = new String[mDeleteTrack.size()];
+            mDeleteTrack.toArray(names);
+            bundle.putStringArray("delete_track_name", names);
+            setResult(Activity.RESULT_OK, getIntent().putExtras(bundle));
+            return;
+        }
         if (!mDeleteFence.isEmpty()) {
             Bundle bundle = new Bundle();
             String[] names = new String[mDeleteFence.size()];
@@ -182,10 +196,10 @@ public class FenceListActivity extends AppCompatActivity implements OnItemClickL
     public void onItemClick(View view, int adapterPosition) {
         XLog.d("onItemClick ... " + adapterPosition + "," + isTrack);
         Intent intent = getIntent();
-        if(isTrack){
+        if (isTrack) {
             intent.putExtra("show_track", true);
             intent.putExtra("track_name", mFenceAdapter.getSateTrackName(adapterPosition));
-        }else{
+        } else {
             Sate7Fence fence = mFenceAdapter.getSateFence(adapterPosition);
             intent.putExtra("center_fence", true);
             intent.putExtra("fence", fence);
@@ -222,6 +236,28 @@ public class FenceListActivity extends AppCompatActivity implements OnItemClickL
             }
             fenceList.clear();
             fenceList = fenceDB.queryAllFence();
+            notifyDataSetChanged();
+        }
+
+        private boolean test = false;
+
+        public void deleteTrack(int position) {
+            String trackName = trackList.get(position).getName();
+            if (test) {
+                XLog.d("deleteTrack simulate ... " + trackName);
+                mDeleteTrack.add(trackName);
+                trackList.remove(position);
+                notifyDataSetChanged();
+            } else {
+                int delete = fenceDB.deleteTrackByName(trackName);
+                XLog.d("deleteTrack ... " + trackName + "," + delete);
+                if (delete > -1) {
+                    mDeleteTrack.add(trackName);
+                }
+            }
+
+            trackList.clear();
+            trackList = fenceDB.listAllTrackInfo();
             notifyDataSetChanged();
         }
 

@@ -22,8 +22,12 @@ public class Sate7Fence implements Parcelable {
     public static final int FENCE_TYPE_POLYGON = 1;
     private String mFenceName;
     private int mMonitorMode = MONITOR_MODE_IN_OUT;
+    private int mMonitorStartMonth = 10;
+    private int mMonitorStartDay = 1;
     private int mMonitorStartHour = 10;
     private int mMonitorStartMinute = 0;
+    private int mMonitorEndMonth = 12;
+    private int mMonitorEndDay = 31;
     private int mMonitorEndHour = 22;
     private int mMonitorEndMinute = 0;
     private int mFenceShape = FENCE_TYPE_CIRCLE;
@@ -41,13 +45,17 @@ public class Sate7Fence implements Parcelable {
         mFenceName = name;
     }
 
-    public Sate7Fence(String name, int monitorMode, int startHour, int startMinute, int endHour, int endMinute, int shape, int radio, double centerLat, double centerLng, int polygonPoints) {
+    public Sate7Fence(String name, int monitorMode, int startMonth, int startDay, int startHour, int startMinute, int endHour, int endMinute, int endMonth, int endDay,int shape, int radio, double centerLat, double centerLng, int polygonPoints) {
         mFenceName = name;
         mMonitorMode = monitorMode;
+        mMonitorStartMonth = startMonth;
+        mMonitorStartDay = startDay;
         mMonitorStartHour = startHour;
         mMonitorStartMinute = startMinute;
         mMonitorEndHour = endHour;
         mMonitorEndMinute = endMinute;
+        mMonitorEndMonth = endMonth;
+        mMonitorEndDay = endDay;
         mFenceShape = shape;
         mFenceCircleRadius = radio;
         mFenceCenterLat = centerLat;
@@ -58,8 +66,12 @@ public class Sate7Fence implements Parcelable {
     protected Sate7Fence(Parcel in) {
         mFenceName = in.readString();
         mMonitorMode = in.readInt();
+        mMonitorStartMonth = in.readInt();
+        mMonitorStartDay = in.readInt();
         mMonitorStartHour = in.readInt();
         mMonitorStartMinute = in.readInt();
+        mMonitorEndMonth = in.readInt();
+        mMonitorEndDay = in.readInt();
         mMonitorEndHour = in.readInt();
         mMonitorEndMinute = in.readInt();
         mFenceShape = in.readInt();
@@ -90,6 +102,38 @@ public class Sate7Fence implements Parcelable {
 
     public void setMonitorMode(int mMonitorMode) {
         this.mMonitorMode = mMonitorMode;
+    }
+
+    public void setMonitorStartMonth(int startMonth) {
+        this.mMonitorStartMonth = startMonth;
+    }
+
+    public void setMonitorStartDay(int startDay) {
+        this.mMonitorStartMonth = startDay;
+    }
+
+    public int getMonitorStartMonth() {
+        return mMonitorStartMonth;
+    }
+
+    public int getMonitorStartDay() {
+        return mMonitorStartDay;
+    }
+
+    public void setMonitorEndMonth(int endMonth) {
+        this.mMonitorEndMonth = endMonth;
+    }
+
+    public void setMonitorEndDay(int endDay) {
+        this.mMonitorEndDay = endDay;
+    }
+
+    public int getMonitorEndMonth() {
+        return mMonitorEndMonth;
+    }
+
+    public int getMonitorEndDay() {
+        return mMonitorEndDay;
     }
 
     public int getMonitorStartHour() {
@@ -218,8 +262,12 @@ public class Sate7Fence implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(mFenceName);
         dest.writeInt(mMonitorMode);
+        dest.writeInt(mMonitorStartMonth);
+        dest.writeInt(mMonitorStartDay);
         dest.writeInt(mMonitorStartHour);
         dest.writeInt(mMonitorStartMinute);
+        dest.writeInt(mMonitorEndMonth);
+        dest.writeInt(mMonitorEndHour);
         dest.writeInt(mMonitorEndHour);
         dest.writeInt(mMonitorEndMinute);
         dest.writeInt(mFenceShape);
@@ -239,9 +287,11 @@ public class Sate7Fence implements Parcelable {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("[").
-                append("name=" + mFenceName).append(",monitorMode=" + mMonitorMode).
+                append("name=" + mFenceName).append(",monitorMode=" + mMonitorMode).append(",mMonitorStartMonth=" + mMonitorStartMonth).
+                append(",mMonitorStartDay=" + mMonitorStartDay).
                 append(",mMonitorStartHour=" + mMonitorStartHour).append(",mMonitorStartMinute=" + mMonitorStartMinute).
-                append(",mMonitorEndHour=" + mMonitorEndHour).append("mMonitorEndMinute=" + mMonitorEndMinute).
+                append(",mMonitorEndMonth=" + mMonitorEndMonth).append(",mMonitorEndDay=" + mMonitorEndDay).
+                append(",mMonitorEndHour=" + mMonitorEndHour).append(",mMonitorEndMinute=" + mMonitorEndMinute).
                 append(",mFenceShape=" + mFenceShape).append(",mFenceCircleRadius=" + mFenceCircleRadius).append(",mFenceCenterLat=" + mFenceCenterLat).
                 append(",mFenceCenterLng=" + mFenceCenterLng).append(",mFencePolygonPoints=" + mFencePolygonPoints).
                 append(",mFencePolygonPointLngs=" + Arrays.toString(mFencePolygonPointLngs)).append(",mFencePolygonPointLats=" + Arrays.toString(mFencePolygonPointLats)).

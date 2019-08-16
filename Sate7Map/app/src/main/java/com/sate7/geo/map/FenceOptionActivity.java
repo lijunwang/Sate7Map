@@ -447,8 +447,12 @@ public class FenceOptionActivity extends AppCompatActivity implements NumberPick
     private Intent passData() {
         Sate7Fence fence = new Sate7Fence(justDebug ? "MyDebugFence" : mETFenceName.getText().toString());
         fence.setMonitorMode(mFenceMonitorMode);
+        fence.setMonitorStartMonth(1);
+        fence.setMonitorStartDay(1);
         fence.setMonitorStartHour(mStartHourPicker.getValue());
         fence.setMonitorStartMinute(mStartMinutePicker.getValue());
+        fence.setMonitorEndMonth(12);
+        fence.setMonitorEndDay(31);
         fence.setMonitorEndHour(mEndHourPicker.getValue());
         fence.setMonitorEndMinute(mEndMinutePicker.getValue());
         fence.setFenceShape(mFenceShape);

@@ -488,11 +488,21 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
                 XLog.d("onActivityResult view track ... " + trackName);
                 drawTrack(mFenceDB.queryTrackPoints(trackName), trackName);
             }
+            //delete fence
             String[] names = data.getExtras().getStringArray("delete_fence_name");
             if (names != null) {
                 XLog.d("onActivityResult delete fence ... " + Arrays.toString(names));
                 for (String name : names) {
                     deleteMarkerByName(name);
+                }
+            }
+            //delete track
+            String[] trackNames = data.getExtras().getStringArray("delete_track_name");
+            if (trackNames != null) {
+                XLog.d("onActivityResult delete track ... " + Arrays.toString(trackNames));
+                for (String name : trackNames) {
+                    mFenceDB.deleteTrackByName(name);
+                    hideTrackByName(name);
                 }
             }
         }
@@ -598,18 +608,13 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
             public void onSureClick() {
                 int id = mFenceDB.deleteTrackByName(name);
                 XLog.d("onSureClick delete ..." + id);
+                hideTrackByName(name);
             }
 
             @Override
             public void onHideClick() {
                 XLog.d("onHideClick before hide ..." + mTrackOverlays);
-                ArrayList<Overlay> overlays = mTrackOverlays.get(name);
-                for (Overlay overlay : overlays) {
-                    XLog.d("onHideClick remove ... " + overlay.getClass());
-                    overlay.remove();
-                }
-                mTrackOverlays.remove(name);
-                XLog.d("onHideClick after hide ..." + mTrackOverlays);
+                hideTrackByName(name);
             }
 
         });
@@ -617,7 +622,18 @@ public class MapActivity extends AppCompatActivity implements View.OnClickListen
         popup.setTitle(getResources().getString(R.string.delete_track_title, name));
         return false;
     }
-
+    private void hideTrackByName(String trackName){
+        ArrayList<Overlay> overlays = mTrackOverlays.get(trackName);
+        if(mTrackOverlays.isEmpty()){
+            return;
+        }
+        for (Overlay overlay : overlays) {
+            XLog.d("onHideClick remove ... " + overlay.getClass());
+            overlay.remove();
+        }
+        mTrackOverlays.remove(trackName);
+        XLog.d("onHideClick after hide ..." + mTrackOverlays);
+    }
     private int mFrequency;
 
     @Override
